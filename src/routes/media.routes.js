@@ -10,10 +10,11 @@ const router = express.Router();
 
 router.post(
   "/upload",
-  verifyFirebaseToken,
-  upload.single("file"),
+  upload.single("file"),      
+  verifyFirebaseToken,        
   uploadMedia
 );
+
 
 router.get("/:id", getMedia);
 
