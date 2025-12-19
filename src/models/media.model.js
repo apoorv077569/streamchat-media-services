@@ -10,6 +10,7 @@ const mediaSchema = new mongoose.Schema({
         required:true,
     },
     mimeType:String,
+    originalName:String,
     createdAt:{
         type:Date,
         default:Date.now,

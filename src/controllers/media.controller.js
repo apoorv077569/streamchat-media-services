@@ -35,6 +35,7 @@ export const uploadMedia = async (req, res) => {
     uploadStream.on("finish", async () => {
       const media = await Media.create({
         fileId: uploadStream.id,
+        filename:file.originalname,
         uploadedBy: senderId,
         receiverId,
         mimeType: file.mimetype,
@@ -43,6 +44,7 @@ export const uploadMedia = async (req, res) => {
       res.status(201).json({
         mediaId: media.fileId,
         mediaType: file.mimetype.split("/")[0],
+        mediaName:file.originalname,
         mediaUrl: `${req.protocol}://${req.get("host")}/api/media/${
           media.fileId
         }`,
@@ -62,11 +64,6 @@ export const uploadMedia = async (req, res) => {
 /**
  * Get media
  */
-
-// export const getMedia = (req, res) => {
-//   const fileId = new ObjectId(req.params.id);
-//   bucket.openDownloadStream(fileId).pipe(res);
-// };
 
 export const getMedia = async (req, res) => {
   try {
