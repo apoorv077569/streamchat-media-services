@@ -117,7 +117,7 @@ export const uploadMedia = async (req, res) => {
 
       res.status(201).json({
         mediaId: media.fileId,
-        mediaType: file.mimetype.split("/")[0],
+        mediaType: file.mimetype,
         mediaName: originalName,   // 👈 SEND BACK ORIGINAL NAME
         mediaUrl: `${req.protocol}://${req.get("host")}/api/media/${media.fileId}`,
         senderId,
