@@ -8,6 +8,67 @@ import mongoose from "mongoose";
 /**
  * Upload media
  */
+// export const uploadMedia = async (req, res) => {
+//   try {
+//     const { receiverId } = req.body;
+//     const senderId = req.user.uid;
+//     const file = req.file;
+
+//     let originalName = file.originalName || "file";
+//     let ext = path.extname(originalName);
+
+//     if (!receiverId) {
+//       return res.status(400).json({ message: "receiverId required" });
+//     }
+
+//     if (!file) {
+//       return res.status(400).json({ message: "File not uploaded" });
+//     }
+
+//     const filename =
+//       crypto.randomBytes(16).toString("hex") + path.extname(file.originalname);
+
+//     const uploadStream = bucket.openUploadStream(filename, {
+//       contentType: file.mimetype,
+//       metadata: { senderId, receiverId },
+//     });
+
+
+
+
+//     uploadStream.end(file.buffer);
+
+//     uploadStream.on("finish", async () => {
+//       const media = await Media.create({
+//         fileId: uploadStream.id,
+//         filename:file.originalname,
+//         uploadedBy: senderId,
+//         receiverId,
+//         mimeType: file.mimetype,
+//       });
+
+//       res.status(201).json({
+//         mediaId: media.fileId,
+//         mediaType: file.mimetype.split("/")[0],
+//         mediaName:file.originalname,
+//         mediaUrl: `${req.protocol}://${req.get("host")}/api/media/${
+//           media.fileId
+//         }`,
+//         senderId,
+//         receiverId,
+//       });
+//     });
+
+//     uploadStream.on("error", (err) => {
+//       res.status(500).json({ message: err.message });
+//     });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+
+
 export const uploadMedia = async (req, res) => {
   try {
     const { receiverId } = req.body;
@@ -22,12 +83,24 @@ export const uploadMedia = async (req, res) => {
       return res.status(400).json({ message: "File not uploaded" });
     }
 
-    const filename =
-      crypto.randomBytes(16).toString("hex") + path.extname(file.originalname);
+    // ✅ ORIGINAL FILE NAME WITH EXTENSION
+    const originalName = file.originalname;
 
+    // ✅ EXTENSION (.jpg, .pdf)
+    const ext = path.extname(originalName);
+
+    // ✅ SAFE STORED NAME
+    const filename =
+      crypto.randomBytes(16).toString("hex") + ext;
+
+    // ✅ UPLOAD TO GRIDFS
     const uploadStream = bucket.openUploadStream(filename, {
       contentType: file.mimetype,
-      metadata: { senderId, receiverId },
+      metadata: {
+        originalName,
+        senderId,
+        receiverId,
+      },
     });
 
     uploadStream.end(file.buffer);
@@ -35,7 +108,8 @@ export const uploadMedia = async (req, res) => {
     uploadStream.on("finish", async () => {
       const media = await Media.create({
         fileId: uploadStream.id,
-        filename:file.originalname,
+        filename,              // stored filename
+        originalName,           // 👈 IMPORTANT
         uploadedBy: senderId,
         receiverId,
         mimeType: file.mimetype,
@@ -44,10 +118,8 @@ export const uploadMedia = async (req, res) => {
       res.status(201).json({
         mediaId: media.fileId,
         mediaType: file.mimetype.split("/")[0],
-        mediaName:file.originalname,
-        mediaUrl: `${req.protocol}://${req.get("host")}/api/media/${
-          media.fileId
-        }`,
+        mediaName: originalName,   // 👈 SEND BACK ORIGINAL NAME
+        mediaUrl: `${req.protocol}://${req.get("host")}/api/media/${media.fileId}`,
         senderId,
         receiverId,
       });
@@ -56,6 +128,7 @@ export const uploadMedia = async (req, res) => {
     uploadStream.on("error", (err) => {
       res.status(500).json({ message: err.message });
     });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
